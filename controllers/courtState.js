@@ -1,6 +1,6 @@
 var express = require ('express');
 var router = express.Router();
-var courtQueries = require('/home/guest/hoopnet/hoopnetServer/models/courts/courtQueries.js');
+var courtQueries = require('/home/guest/hoopnet/hoopnetServer/models/courtModel.js');
 
 
   router.all('/', function(req, res, next) {
@@ -18,13 +18,9 @@ var courtQueries = require('/home/guest/hoopnet/hoopnetServer/models/courts/cour
     else next();
   })
 
-  // last ,middlewear function
-  router.all('/'function(req, res){
+  // last middlewear function
+  router.all('/', function(req, res){
     res.send("catch all middlewear");
   })
-
-
-
-
 
   module.exports = router;
