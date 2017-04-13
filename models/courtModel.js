@@ -30,11 +30,12 @@ var courtSchema = mongoose.Schema({
 // The model of the schema above
 var Court = mongoose.model("Court", courtSchema);
 
+
 // Returns: array of JSON Courts - all in db
 exports.getAllCourts = function(){
 
 // query the db, save the returned query to query
-  var query = Court.find({name: 'Maxcy Field House'}, function(err, courts){
+  var query = Court.find({}, function(err, courts){
     if (err) console.log(err);
   })
 
@@ -69,4 +70,6 @@ gotCourts = function(courts){
   //console.log(courts[0]);
   writableStream.write(JSON.stringify(courts));
   exports.eventEmitter.emit('gotCourts');
+  for (let court of courts)
+    console.log(court.name + " lat: " + court.location.lat + " long: " + court.location.long);
 }

@@ -3,8 +3,9 @@ var router = express.Router();
 var courtModel = require('/home/guest/hoopnet/hoopnetServer/models/courtModel.js');
 var fs = require('fs');
 
+// get all courts upon firing up the server
 courtModel.getAllCourts();
-var gotAllCourts = false;
+var gotAllCourts = false; // changes to true when courts come in
 
   router.all('/', function(req, res, next) {
     console.log(req.method + " request recieved");
@@ -18,6 +19,7 @@ var gotAllCourts = false;
     if(req.query.courtQuery === "all"){
       if(gotAllCourts){
         // get array of json court objects.
+        // send it as json
         res.send(JSON.parse(fs.readFileSync
           ("/home/guest/hoopnet/hoopnetServer/models/allCourts.json")))
       }
@@ -34,7 +36,7 @@ var gotAllCourts = false;
 // Listens for the 'gotCourts event'
 //on this event, parses data and prints it to console
 courtModel.eventEmitter.on('gotCourts', function(){
-  gotCourts = true;
+  gotAllCourts = true;
   var text = (fs.readFileSync("/home/guest/hoopnet/hoopnetServer/models/allCourts.json"));
   var json = JSON.parse(text);
   console.log('json data: ' + json[0].name);
