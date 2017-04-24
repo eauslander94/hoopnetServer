@@ -17,6 +17,7 @@ var courtSchema = mongoose.Schema({
     long: Number,
     lat: Number
   },
+
   basketArray: [{
     basketNo: Number,
     game: String,
@@ -26,6 +27,21 @@ var courtSchema = mongoose.Schema({
     ballMovement: Number
   }]
 });
+
+var simpleSchema = {
+  name: String,
+  totalBaskets: Number,
+  totalPlayers: Number,
+  location: {
+    long: Number,
+    lat: Number
+  },
+  // an array of individual courts, each representing one or two baskets
+  oneCourtArray: [{
+    basket1: String,
+    basket2: String
+  }]
+}
 
 // The model of the schema above
 var Court = mongoose.model("Court", courtSchema);
