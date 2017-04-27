@@ -68,7 +68,6 @@ exports.refresh = function(name, lat, long){
         exports.eventEmitter.emit("gotOneCourt", courts[0])
       }
     })
-
 }
 
 
@@ -76,14 +75,10 @@ exports.refresh = function(name, lat, long){
 exports.getAllCourts = function(){
 
 // query the db, save the returned query to query
-  var query = Court.find({}, function(err, courts){
+  Court.find({}, function(err, courts){
     if (err) console.log(err);
+    else (exports.eventEmitter.emit("gotAllCourts", courts))
   })
-  var promise = query.exec();
-  promise.then(function(courts){
-    gotCourts(courts);
-  })
-  return "Here are all courts";
 }
 
 exports.eventEmitter = new events.EventEmitter();

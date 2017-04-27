@@ -6,8 +6,8 @@ router.use(require('body-parser')());
 
 
 // get all courts upon firing up the server
-courtModel.getAllCourts();
-var gotAllCourts = false; // changes to true when courts come in
+//courtModel.getAllCourts();
+//var gotAllCourts = false; // changes to true when courts come in
 
   router.all('/', function(req, res, next) {
     console.log(req.method + " request recieved");
@@ -17,17 +17,13 @@ var gotAllCourts = false; // changes to true when courts come in
   })
 
   // Middlewear for getAllCourts reqest
-  router.get('/', function(req, res, next) {
-    if(req.query.courtQuery === "all"){
-      if(gotAllCourts){
-        // get array of json court objects.
-        // send it as json
-        res.send(JSON.parse(fs.readFileSync
-          ("/home/guest/hoopnet/hoopnetServer/models/allCourts.json")))
-      }
-      // if we do not yet have courts, send error message
-      else { res.send("Courts have yet to be loaded from the database") };
-    } else next();
+  router.get('/getAllCourts', function(req, res, next) {
+
+      courtModel.getAllCourts();
+      courtModel.eventEmitter.once("gotAllCourts", function(courts){
+        // send an array of JSON objects containing all courts
+        res.send(courts);
+      })
   })
 
   // middlewear for refresh request
