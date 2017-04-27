@@ -30,14 +30,28 @@ var gotAllCourts = false; // changes to true when courts come in
     } else next();
   })
 
+  // middlewear for refresh request
+  // query params: name, lat and long of the court to be refreshed
+  // post: response is sent with the latest version of the given court
+  router.get('/refresh', function(req, res, next) {
+    console.log("got refresh request");
+    let courtName = req.query.courtName;
+      courtModel.refresh(req.query.courtName, req.query.lat, req.query.long)
+      courtModel.eventEmitter.once('gotOneCourt', function(court){
+      console.log("got courtname from event listner " + court.name);
+      res.send(court);
+      //res.end();
+    })
+  })
+
 
   // handling putOneGame requests
   // post: givern game corresponding to given basket on given court
   //       is put into the db and replaces current game.
-  router.put('/putOneCourt', function(req, res, next) {
+  router.put('/putOneGame', function(req, res, next) {
 
-      console.log('req query: ' + req.query);
-      console.log("game chosen by radio" + req.body.game)
+      console.log("putOneGame request recieved");
+      courtModel.putOneGame(req.body.court, req.body.basketNo, req.body.game);
   })
 
   // last middlewear function
