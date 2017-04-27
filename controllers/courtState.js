@@ -35,13 +35,12 @@ var gotAllCourts = false; // changes to true when courts come in
   // post: response is sent with the latest version of the given court
   router.get('/refresh', function(req, res, next) {
     console.log("got refresh request");
-    let courtName = req.query.courtName;
-      courtModel.refresh(req.query.courtName, req.query.lat, req.query.long)
+    courtModel.refresh(req.query.courtName, req.query.lat, req.query.long);
+
       courtModel.eventEmitter.once('gotOneCourt', function(court){
-      console.log("got courtname from event listner " + court.name);
-      res.send(court);
-      //res.end();
-    })
+        console.log("got courtname from event listner " + court.name);
+        res.send(court);
+      })
   })
 
 
@@ -52,6 +51,7 @@ var gotAllCourts = false; // changes to true when courts come in
 
       console.log("putOneGame request recieved");
       courtModel.putOneGame(req.body.court, req.body.basketNo, req.body.game);
+      res.end();
   })
 
   // last middlewear function
