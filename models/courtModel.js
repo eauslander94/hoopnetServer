@@ -2,38 +2,69 @@ var mongoose = require('mongoose');
 var Promise = require('promise');
 var events = require('events');
 var fs = require('fs');
-mongoose.connect('mongodb://localhost/test', function(error)
-  { if(error) console.log(error) }  // log any errors
-);
+mongoose.Promise = require('bluebird');
+
+// Connect to our db as admin with hardcoded credentials.
+// We will adjust this when we complete our authentication cycle
+mongoose.connect('mongodb://eauslander94:jordanSpliff90@localhost:27017/Blacktop', {poolsize: 2}, (error) => {
+  if(error) console.log(error);
+});
+
 
 var db = mongoose.connection;
 
-/*var MongoClient = require('mongodb').MongoClient
-MongoClient.connect('mongodb://localhost/test', function(err, db){
-  if(err) console.log(err);
-  else db.collection('courts').update({name: "Maxcy Field House" },{ $set: {totalPlayers: 40} })
-
-})*/
 
 var exports = module.exports = {}
 
-// The Grand Schema of Things
+
+// Returns: array of JSON Courts - all in db
+exports.getAllCourts = function(){
+  return Court.find({}).exec();
+}
+
+// Post:  Provided window Data replaces corresponding windowData in db
+// Param: WindowData to be used as the update
+// Returns: Promise resolving this court with the updated windowData
+exports.putWindowData = function(windowData){
+
+  return Court.findOneAndUpdate(
+    {_id: windowData.court_id},
+    {$set: {windowData: windowData}},
+    {new: true}
+  ).exec();
+}
+
+
+// The Grand Schema of Things (I know)
 var courtSchema = mongoose.Schema({
   name: String,
-  totalPlayers: Number,
-  totalBaskets: Number,
+  type: String,
+  baskets: Number,
+  openTimes: [String],
+  closeTimes: [String],
+
   location: {
-    long: Number,
-    lat: Number
+    lat: Number,
+    lng: Number
   },
 
-  basketArray: [{
-    basketNo: Number,
-    game: String,
-    skillLevel: Number,
-    wait: Number,
-    physicality: Number,
-    ballMovement: Number
+  windowData: {
+    court_id: String,
+    baskets: Number,
+    games: [String],
+    gLastValidated: Date,
+    action: String,
+    actionDescriptor: String,
+    aLastValidated: Date,
+    pNow: [String],
+  },
+  closures: [{
+    clStart: Date,
+    clEnd: Date,
+    reason: String,
+    baskets: Number,
+    days: [Number],
+    repeat: Boolean,
   }]
 });
 
@@ -71,50 +102,78 @@ exports.refresh = function(name, lat, long){
 }
 
 
-// Returns: array of JSON Courts - all in db
-exports.getAllCourts = function(){
-
-// query the db, save the returned query to query
-  Court.find({}, function(err, courts){
-    if (err) console.log(err);
-    else (exports.eventEmitter.emit("gotAllCourts", courts))
-  })
-}
-
 exports.eventEmitter = new events.EventEmitter();
-//exports.eventEmitter.on('gotCourts', function(){console.log("WE HAVE COURTS  EVENTS BEING EMITTED")});
-//exports.eventEmitter.emit('gotCourts');
-
-var writableStream = fs.createWriteStream(
-  '/home/guest/hoopnet/hoopnetServer/models/allCourts.json');
-
-gotCourts = function(courts){
-  //console.log(courts[0]);
-  writableStream.write(JSON.stringify(courts));
-  exports.eventEmitter.emit('gotCourts');
-  for (let court of courts)
-    console.log(court.name + " lat: " + court.location.lat + " long: " + court.location.long);
-}
 
 
+let tompkins = new Court({
+  name: 'Tompkins Square Park',
+  type: 'outdoor',
+  baskets: 4,
+  openTimes: ['6:00a', '6:00a', '6:00a', '6:00a', '6:00a', '8:00a', '8:00a'],
+  closeTimes: ['11:00p','7:00p','11:00p','11:00p','11:00p','10:30p','8:00p'],
 
-/*var tompkins = new Court({
-  name: "Tompkins Square Park",
-  totalPlayers: 22,
-  totalBaskets: 4,
   location: {
-    long: -73.981737,
-    lat: 40.726526
+    lat: 40.726429,
+    lng: -73.981784,
   },
-  basketArray: [
-    { basketNo: 1, game: "5 v 5", skillLevel: 82, wait: 2, physicality: 88,  ballMovement: 73 },
-    { basketNo: 2 , game: "5 v 5", skillLevel: 82, wait: 2, physicality: 88,  ballMovement: 73 },
-    { basketNo: 3 , game: "4 v 4", skillLevel: 85, wait: 1, physicality: 70,  ballMovement: 81 },
-    { basketNo: 4 , game: "3 v 3", skillLevel: 82, wait: 2, physicality: 88,  ballMovement: 73 },
-  ]
-})
 
+  windowData: {
+    baskets: 4,
+    games: ["5", "4", "2"],
+    gLastValidated: new Date(),
+    action: "Active",
+    actionDescriptor: "continuous runs",
+    aLastValidated: new Date(),
+    pNow: []
+  },
 
-tompkins.save(function(err, maxcy) {
-  if(err) return console.error(err);
-});*/
+  closures: [
+    {
+      clStart: new Date(10),
+      clEnd: new Date(12),
+      reason: "3 on 3 Tournament",
+      baskets: 4,
+      // sunday(index 0) to saturday(index 6) -
+      // 1 in the index means closure is on that day
+      // 2 in the index means it repeats every week on that day
+      days: [1, 0, 0, 0, 0, 0, 2],
+      repeat: false
+    },
+      {clStart: new Date(16),
+      clEnd: new Date(18),
+      reason: "Mens Soccer Practice",
+      baskets: 4,
+      days: [2, 0, 0, 0, 0, 2, 0],
+      repeat: true
+    },
+    {
+      clStart: new Date(16),
+      clEnd: new Date(18),
+      reason: "Mens Basketball Practice",
+      baskets: 4,
+      days: [1, 0, 0, 0, 0, 0, 1],
+      repeat: true
+    },
+    {
+      clStart: new Date(16),
+      clEnd: new Date(18),
+      reason: "Girls Soccer Practice",
+      baskets: 4,
+      days: [2, 0, 0, 0, 0, 0, 1],
+      repeat: true
+    }
+  ],
+});
+
+// Court.create(tompkins, (err, tompkins) => {
+//   if(err) console.log(err);
+// })
+
+//var Tompkins = new Court(tompkins);
+
+// tompkins.save(function(err, tompkins) {
+//   if(err) return console.error(err);
+//   console.log('saving tompkins')
+// });
+
+// console.log('saved Tompkins');
