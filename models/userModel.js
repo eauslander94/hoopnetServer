@@ -26,6 +26,27 @@ exports.getUsers = function(user_ids){
   return Promise.all(userPromises);
 }
 
+
+// Returns: single promise which resolves into an array of users that match the searchterm
+exports.getUsersByName = function(searchterm){
+  searchterm = searchterm.replace(/\s+/g, '');
+  return User.aggregate(
+    [
+      { $project: { fullName: { $concat: [ "$fName", '$nName', "$lName" ]}}},
+      { $match: { fullName: { $regex: new RegExp(searchterm, 'i') } } }
+    ]
+  ).exec().then((users) => {
+    let ids = [];
+    for(let user of users)
+      ids.push(user._id);
+    return this.getUsers(ids);
+  }).catch((err) => {return(err)});
+
+  // Search without partial matching if the above has performance issues
+  // return User.find({$text: {$search: searchterm}}, {$caseSensitive: true} ).exec();
+}
+
+
 // Post:  entire user object in db is replaced by provided user
 // Returns: Promise resolving in the updated user oject
 exports.putUser = function(user){

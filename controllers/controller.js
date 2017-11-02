@@ -14,6 +14,7 @@ var fs = require('fs');
   })
 
 
+
   // Sends back an array of all courts in our db
   router.get('/getAllCourts', (req, res, next) => {
 
@@ -37,9 +38,15 @@ var fs = require('fs');
   })
 
 
-  router.get('/getUsersByName', (req, res, next) => {
-    console.log('yo');
-
+  // Sends back an array of users that match the searchterm
+  router.get('/getUsersByName', function(req, res, next) {
+    userModel.getUsersByName(req.query.searchterm).then((userArrays) => {
+      // massage data into array of users, send it back
+      let users = [];
+      for(let user of userArrays)
+        users.push(user[0]);
+      res.send(users);
+    }).catch((err) => {  next(err)  });
   });
 
 
@@ -78,11 +85,16 @@ var fs = require('fs');
 
   // Post: Sends back array of updated users, starting withuser 1
   router.put('/addFriend', (req, res, next) => {
-    console.log('bro');
     userModel.addFriend(req.body.user1, req.body.user2).then((users, err) => {
       if (err) throw err;
       res.send([users[2], users[3]]);
     }).catch((err) => { console.log(err);  next(err)  });
+  })
+
+
+  router.put('/requestFriend', (req, res, next) => {
+    console.log(req.body.currentUser + ' in controller.js');
+    res.send({});
   })
 
 
