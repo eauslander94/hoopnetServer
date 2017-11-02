@@ -94,8 +94,10 @@ exports.addFriend = function(id1, id2){
   return Promise.all(promises);
 }
 
-
-
+// Post: current user added to requested user's friend requests
+exports.requestFriend = function(requestedUser, currentUser){
+  return User.update({_id: requestedUser}, {$push:{friendRequests: currentUser}}).exec();
+}
 
 
 

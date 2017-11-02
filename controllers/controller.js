@@ -92,9 +92,11 @@ var fs = require('fs');
   })
 
 
+  // RequestedUser added to currentUser's friend requests
   router.put('/requestFriend', (req, res, next) => {
-    console.log(req.body.currentUser + ' in controller.js');
-    res.send({});
+    userModel.requestFriend(req.body.requestedUser, req.body.currentUser)
+     .then(() => { res.send({}) })
+    .catch((err) => { console.log(err);  next(err)  });
   })
 
 
