@@ -6,14 +6,16 @@ mongoose.Promise = require('bluebird');
 
 // Connect to our db as admin with hardcoded credentials.
 // We will adjust this when we complete our authentication cycle
-mongoose.connect('mongodb://eauslander94:jordanSpliff90@localhost:27017/Blacktop', {poolsize: 2}, (error) => {
-  if(error) console.log(error);
-});
+mongoose.connect(
+  'mongodb://eauslander94:jordanSpliff90@localhost:27017/Blacktop',
+  {useMongoClient: true},
+  (error) => {
+    if(error) console.log('err - mongoose.connect - courtModel.js\n' + error);
+  }
+);
 
 
 var db = mongoose.connection;
-
-
 var exports = module.exports = {}
 
 
@@ -21,6 +23,31 @@ var exports = module.exports = {}
 exports.getAllCourts = function(){
   return Court.find({}).exec();
 }
+
+
+// Returns: Promise resolving into an array of fetched court objects
+// Param:  The ids of the courts to be fetched
+exports.getCourtsById = function(court_ids){
+  let promises = [];
+  for(let court_id of court_ids)
+    promises.push(Court.find({_id: court_id}).exec());
+  return Promise.all(promises);
+}
+
+// Returns: promise resolving to array of courts within the courtside distance
+// Param: location the following format - [lng, lat]
+// Param: The range(in meters) from courts to location
+exports.courtsByLocation = function(location, range){
+  return Court.find(
+    { location:
+      { $near:
+        { $geometry: { type: "Point",  coordinates: location },
+          $maxDistance: range
+        }
+      }
+  }).exec();
+}
+
 
 // Post:  Provided window Data replaces corresponding windowData in db
 // Param: WindowData to be used as the update
@@ -35,7 +62,29 @@ exports.putWindowData = function(windowData){
 }
 
 
-// The Grand Schema of Things (I know)
+// Post: user_id is added to windowData's pNow corresponding to court_id
+// Params: the ids of the data to update
+exports.courtsidePut = function(court_id, user_id){
+  return Court.findOneAndUpdate(
+    {_id: court_id},
+    {$addToSet: {'windowData.pNow': user_id}},
+    {new: true}
+  ).exec();
+}
+
+
+// Post: user_id is removed from court_id's windowData's pNow
+// Params: the ids of the court and user to update
+exports.courtsideDelete = function(court_id, user_id){
+  return Court.findOneAndUpdate(
+    {_id: court_id},
+    {$pull: {'windowData.pNow': user_id}},
+    {new: true}
+  ).exec();
+}
+
+
+// The Grand Schema of Things (Sorry)
 var courtSchema = mongoose.Schema({
   name: String,
   type: String,
@@ -44,8 +93,8 @@ var courtSchema = mongoose.Schema({
   closeTimes: [String],
 
   location: {
-    lat: Number,
-    lng: Number
+    type: {type: String},
+    coordinates: [Number]
   },
 
   windowData: {
@@ -105,16 +154,16 @@ exports.refresh = function(name, lat, long){
 exports.eventEmitter = new events.EventEmitter();
 
 
-let tompkins = new Court({
-  name: 'Tompkins Square Park',
+let forsyth = new Court({
+  name: 'Forsyth Park - Houston Street Courts',
   type: 'outdoor',
   baskets: 4,
-  openTimes: ['6:00a', '6:00a', '6:00a', '6:00a', '6:00a', '8:00a', '8:00a'],
-  closeTimes: ['11:00p','7:00p','11:00p','11:00p','11:00p','10:30p','8:00p'],
+  openTimes: ['6:00a', '6:00a', '6:00a', '6:00a', '6:00a', '6:00a', '6:00a'],
+  closeTimes: ['11:00p','11:00p','11:00p','11:00p','11:00p','11:00p','11:00p'],
 
   location: {
-    lat: 40.726429,
-    lng: -73.981784,
+    type: "Point",
+    coordinates: [-73.990828, 40.723145]
   },
 
   windowData: {
@@ -127,53 +176,11 @@ let tompkins = new Court({
     pNow: []
   },
 
-  closures: [
-    {
-      clStart: new Date(10),
-      clEnd: new Date(12),
-      reason: "3 on 3 Tournament",
-      baskets: 4,
-      // sunday(index 0) to saturday(index 6) -
-      // 1 in the index means closure is on that day
-      // 2 in the index means it repeats every week on that day
-      days: [1, 0, 0, 0, 0, 0, 2],
-      repeat: false
-    },
-      {clStart: new Date(16),
-      clEnd: new Date(18),
-      reason: "Mens Soccer Practice",
-      baskets: 4,
-      days: [2, 0, 0, 0, 0, 2, 0],
-      repeat: true
-    },
-    {
-      clStart: new Date(16),
-      clEnd: new Date(18),
-      reason: "Mens Basketball Practice",
-      baskets: 4,
-      days: [1, 0, 0, 0, 0, 0, 1],
-      repeat: true
-    },
-    {
-      clStart: new Date(16),
-      clEnd: new Date(18),
-      reason: "Girls Soccer Practice",
-      baskets: 4,
-      days: [2, 0, 0, 0, 0, 0, 1],
-      repeat: true
-    }
-  ],
+  closures: [],
 });
 
-// Court.create(tompkins, (err, tompkins) => {
-//   if(err) console.log(err);
-// })
 
-//var Tompkins = new Court(tompkins);
-
-// tompkins.save(function(err, tompkins) {
+// forsyth.save(function(err, forsyth) {
 //   if(err) return console.error(err);
-//   console.log('saving tompkins')
+//   console.log('saving forsyth')
 // });
-
-// console.log('saved Tompkins');

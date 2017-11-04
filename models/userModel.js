@@ -6,9 +6,13 @@ mongoose.Promise = require('bluebird');
 
 // Connect to our db as admin with hardcoded credentials.
 // We will adjust this when we complete our authentication cycle
-mongoose.createConnection('mongodb://eauslander94:jordanSpliff90@localhost:27017/Blacktop', {poolsize: 2}, (error) => {
-  if(error) console.log(error);
-});
+mongoose.connect(
+  'mongodb://eauslander94:jordanSpliff90@localhost:27017/Blacktop',
+  {useMongoClient: true},
+  (error) => {
+    if(error) console.log('err - mongoose.connect - userModel.js\n' + error);
+  }
+);
 
 // Our connection in an object
 var db = mongoose.connection;
@@ -28,6 +32,7 @@ exports.getUsers = function(user_ids){
 
 
 // Returns: single promise which resolves into an array of users that match the searchterm
+// Param: searchterm - term by which we search for users
 exports.getUsersByName = function(searchterm){
   searchterm = searchterm.replace(/\s+/g, '');
   return User.aggregate(
@@ -48,6 +53,7 @@ exports.getUsersByName = function(searchterm){
 
 
 // Post:  entire user object in db is replaced by provided user
+// Param: User to replace user in db
 // Returns: Promise resolving in the updated user oject
 exports.putUser = function(user){
   return User.findOneAndUpdate(
@@ -57,7 +63,7 @@ exports.putUser = function(user){
         nName: user.nName,
         fName: user.fName,
         lName: user.lName,
-        homeCourts: user.homeCourts,
+        homecourts: user.homecourts,
         friends: user.friends,
         friendRequests: user.friendRequests,
         avatar: user.avatar,
@@ -70,9 +76,9 @@ exports.putUser = function(user){
 }
 
 
-// Post: both users are added to the friends[] of the other
-// Post2:  both users are removed from friendRequests[] of the other, if present
-// Params: ids of users to be added
+// Post:    both users are added to the friends[] of the other
+// Post2:   both users are removed from friendRequests[] of the other, if present
+// Params:  ids of users to be added
 // Returns: promise.all promise, resolving to an array like following:
 // [updateStatus, updateStatus, updatedUser1object, updatedUser2object]
 exports.addFriend = function(id1, id2){
@@ -94,12 +100,66 @@ exports.addFriend = function(id1, id2){
   return Promise.all(promises);
 }
 
-// Post: current user added to requested user's friend requests
+
+// Post:    current user added to requested user's friend requests
+// Param:   ids of current user and requested user
+// Retruns: promise resolving to the updated requested user
 exports.requestFriend = function(requestedUser, currentUser){
   return User.update({_id: requestedUser}, {$push:{friendRequests: currentUser}}).exec();
 }
 
 
+// Post:    both users removed from friends[] of the other
+// Params:  ids of the users who will no longer be friends.  So sad.
+// Returns: Promise resolving to array of the updated users
+exports.removeFriend = function(user1, user2){
+  var promises = [];
+  promises.push(User.findOneAndUpdate(
+    {_id: user1},
+    {$pull: {friends: user2}},
+    {upsert: true, new: true}
+  ).exec());
+  promises.push(User.findOneAndUpdate(
+    {_id: user2},
+    {$pull: {friends: user1}},
+    {upsert: true, new: true}
+  ).exec());
+  return Promise.all(promises);
+}
+
+// Post:    New user is added to users collection
+// Param:   New user to be added
+// Returns: Nothing
+exports.newUser = function(user){
+  console.log(user);
+  User.create(user, function(err, user) {
+     if(err) console.error(err);
+   });
+}
+
+
+// Post:    given court id is added to user's courtside field
+// Params:  ids of the user to be updated and court he/she is by
+// Retruns: Promise resolving to updated user
+exports.courtsidePut = function(court_id, user_id){
+  return User.findOneAndUpdate(
+    {_id: user_id},
+    { $set: {courtside: user_id} },
+    {upsert: true, new: true}
+  ).exec();
+}
+
+
+// Post:    given court id is removed from user's courtside field
+// Params:  ids of the user to be updated and court he/she is no longer by
+// Retruns: Promise resolving to updated user
+exports.courtsideDelete = function(court_id, user_id){
+  return User.findOneAndUpdate(
+    {_id: user_id},
+    { $set: {courtside: null} },
+    {upsert: true, new: true}
+  ).exec();
+}
 
 
 // The grand schema of things (kill me later)
@@ -122,11 +182,12 @@ var userSchema = mongoose.Schema({
 // The model of the schema above
 var User = mongoose.model('User', userSchema);
 
+
+// new user to be added
 let eli = new User({
     fName: "Eli",
     nName: "White Iverson",
     lName: "Auslander",
-
     // Leave things as empty for now
     homecourts: [],
     friends: [],
