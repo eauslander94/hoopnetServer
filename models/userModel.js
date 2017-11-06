@@ -137,6 +137,13 @@ exports.newUser = function(user){
    });
 }
 
+// Post:    given court_id is added to homecourts of given user_id
+// Params:  ids of court and user
+// Returns: Promise
+exports.putHomecourt = function(user_id, court_id){
+  return(User.update({_id: user_id}, {$addToSet:{homecourts: court_id}}).exec());
+}
+
 
 // Post:    given court id is added to user's courtside field
 // Params:  ids of the user to be updated and court he/she is by

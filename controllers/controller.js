@@ -158,6 +158,18 @@ var fs = require('fs');
     })
   })
 
+  // Post: Provided court_id is added to homecourt list of provided user_id
+  // Param: court_id and user_id
+  // Sends back: empty object
+  router.put('/putHomecourt', (req, res, next) => {
+    userModel.putHomecourt(req.body.user_id, req.body.court_id).then(() => {
+      res.send();
+    }).catch((err) => {
+      console.log('error in controller.js /putHomecourt ' + err);
+      next(err);
+    });
+  })
+
 
   // Post:  User added to court's pNow, court added to user's courtside
   // Body params: ids of respective user and court
@@ -173,6 +185,37 @@ var fs = require('fs');
     }).catch((err) => {
       console.log('err /courtsidePutUser in controller.js\n' +err)
     });
+  })
+
+
+  // Post: closure provided updates the version of it currently in db
+  // Param: The closure to be updated
+  // Sends updated court object
+  router.put('/putClosure', (req, res, next) => {
+    courtModel.putClosure(req.body.closure, req.body.court_id).then((data) => {
+      console.log(data[1])
+      res.send(data[1]);
+    }).catch((err) => {
+      console.log('err /putClosure in controller.js\n' +err)
+    });
+  })
+
+
+  router.post('/newUser', (req, res, next) => {
+    console.log(req.body.user.nName);
+    userModel.newUser(req.body.user);
+    next();
+  })
+
+  // Post: new closure is added to closures of provided court
+  // Param: the closure to be added and the court to wich it will be added
+  // Sends back updated court
+  router.post('/postClosure', (req, res, next) => {
+    courtModel.postClosure(req.body.closure, req.body.court_id).then((court) => {
+      res.send(court);
+    }).catch((err) => {
+      console.log('err /postClosure in controller.js\n' +err)
+    });;
   })
 
 
@@ -193,10 +236,16 @@ var fs = require('fs');
   })
 
 
-  router.post('/newUser', (req, res, next) => {
-    console.log(req.body.user.nName);
-    userModel.newUser(req.body.user);
-    next();
+  // Post: Closure  provided is removed from the db
+  // Param: _id of the closure to be deleted
+  // Sends back updated court
+  router.delete('/deleteClosure', (req, res, next) => {
+    courtModel.deleteClosure(req.query.closure_id, req.query.court_id).then((court) => {
+      console.log(court);
+      res.send(court);
+    }).catch((err) => {
+      console.log('err /deleteClosure in controller.js\n' +err)
+    });;
   })
 
 

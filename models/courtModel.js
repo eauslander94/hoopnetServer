@@ -83,6 +83,52 @@ exports.courtsideDelete = function(court_id, user_id){
   ).exec();
 }
 
+// Post: Closure whose id is provided is removed from the db
+// Param: _id of the closure to be deleted
+// Returns: Promise resolving to updated court
+exports.postClosure = function(closure, court_id){
+  return Court.findOneAndUpdate(
+    {_id: court_id},
+    {$addToSet: {closures: closure}},
+    {new: true}
+  ).exec();
+}
+
+// Post: closure provided updates the version of it currently in db
+// Param: The closure to be updated
+// Returns: Promise resolving to updated
+exports.putClosure = function(closure, court_id){
+  console.log('court_id: ' + court_id);
+  console.log('closure_id: ' + closure._id);
+
+  let promises = []
+  // Remove the old closure
+  promises.push(Court.findOneAndUpdate(
+    {_id: court_id},
+    {$pull: {closures: {_id: closure._id} }},
+    {new: true}
+  ).exec());
+  // Add the new Closure
+  promises.push(Court.findOneAndUpdate(
+    {_id: court_id},
+    {$addToSet: {closures: closure}},
+    {new: true}
+  ).exec());
+
+  return Promise.all(promises);
+}
+
+// Post:    Closure whose id is provided is removed from the db
+// Param:   _id of the closure to be deleted
+// Returns: Promise resolving to updated court object
+exports.deleteClosure = function(closure_id, court_id){
+  return Court.findOneAndUpdate(
+    {_id: court_id},
+    {$pull: {closures: {_id: closure_id} }},
+    {new: true}
+  ).exec();
+}
+
 
 // The Grand Schema of Things (Sorry)
 var courtSchema = mongoose.Schema({
