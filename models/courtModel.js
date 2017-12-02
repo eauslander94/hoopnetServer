@@ -144,13 +144,13 @@ var courtSchema = mongoose.Schema({
   },
 
   windowData: {
-    court_id: String,
     baskets: Number,
     games: [String],
     gLastValidated: Date,
     action: String,
     actionDescriptor: String,
     aLastValidated: Date,
+    court_id: String,
     pNow: [String],
   },
   closures: [{
@@ -201,7 +201,7 @@ exports.eventEmitter = new events.EventEmitter();
 
 
 let forsyth = new Court({
-  name: 'Forsyth Park - Houston Street Courts',
+  name: 'Tompkins Square Park',
   type: 'outdoor',
   baskets: 4,
   openTimes: ['6:00a', '6:00a', '6:00a', '6:00a', '6:00a', '6:00a', '6:00a'],
@@ -209,7 +209,7 @@ let forsyth = new Court({
 
   location: {
     type: "Point",
-    coordinates: [-73.990828, 40.723145]
+    coordinates: [-73.981784, 40.726429]
   },
 
   windowData: {
@@ -219,6 +219,8 @@ let forsyth = new Court({
     action: "Active",
     actionDescriptor: "continuous runs",
     aLastValidated: new Date(),
+    // Update this from cmdline, if we need to. Command in in google drive under mongoDB reference guide
+    court_id: "",
     pNow: []
   },
 

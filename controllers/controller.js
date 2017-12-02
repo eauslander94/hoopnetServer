@@ -2,6 +2,7 @@ var express = require ('express');
 var router = express.Router();
 var courtModel = require('../models/courtModel.js');
 var userModel = require ('../models/userModel.js');
+var app = require('../app.js');
 var fs = require('fs');
 
 
@@ -105,7 +106,6 @@ var fs = require('fs');
     courtModel.refresh(req.query.courtName, req.query.lat, req.query.long);
 
       courtModel.eventEmitter.once('gotOneCourt', function(court){
-        console.log("got courtname from event listner " + court.name);
         res.send(court);
       })
   })
@@ -116,7 +116,8 @@ var fs = require('fs');
   router.put('/putWindowData', function(req, res, next) {
 
     courtModel.putWindowData(req.body.windowData).then((court) => {
-      // Here we will use a socket to tell all clients that our window has been updated
+      // emit that this window has been updated
+      app.io.emit("windowUpdate" + court.windowData.court_id, court.windowData);
       res.send(court);
     }).catch((err) => {  next(err)  });
   })
