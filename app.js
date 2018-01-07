@@ -16,7 +16,9 @@ var server = require('http').Server(app);
 // For socket.io connection with client, exported to the controller
 exports.io = require('socket.io')(server);
 
-// listen on port 3000
-server.listen(3000, function(){
-  console.log('Listening on port 3000');
-})
+// listen on port 3000, with my p
+server.listen(3000,
+  function(){
+    console.log('Listening on port 3000');
+  }
+)

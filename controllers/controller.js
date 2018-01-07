@@ -4,7 +4,9 @@ var courtModel = require('../models/courtModel.js');
 var userModel = require ('../models/userModel.js');
 var app = require('../app.js');
 var fs = require('fs');
-
+// For JWT authentication
+const jwt = require('express-jwt');
+const jwksRsa = require('jwks-rsa');
 
 
   router.all('/', function(req, res, next) {
@@ -14,6 +16,26 @@ var fs = require('fs');
     next();
   })
 
+
+  // Authentication middleware. When used, the
+  // access token must exist and be verified against
+  // the Auth0 JSON Web Key Set
+  const checkJwt = jwt({
+    // Dynamically provide a signing key
+    // based on the kid in the header and
+    // the signing keys provided by the JWKS endpoint.
+    secret: jwksRsa.expressJwtSecret({
+      cache: true,
+      rateLimit: true,
+      jwksRequestsPerMinute: 5,
+      jwksUri: `https://eauslander94-dev.auth0.com/.well-known/jwks.json`
+    }),
+
+    // Validate the audience and the issuer.
+    audience: 'https://courtlife.server.com',
+    issuer: `https://eauslander94-dev.auth0.com/`,
+    algorithms: ['RS256']
+  });
 
 
   // Sends back an array of all courts in our db
@@ -74,9 +96,9 @@ var fs = require('fs');
 
   // Sends back an array of users
   // Param:  [String] - array of user ids of users to be fetched
-  router.get('/getUsers', function(req, res, next) {
+  router.get('/getUsers', checkJwt, function(req, res, next) {
     // Resolve the promise returned by the model
-    userModel.getUsers(JSON.parse(req.query.user_ids)).then((userArrays) => {
+    userModel.getUsers(JSON.parse(req.get('user_ids'))).then((userArrays) => {
       // massage data into array of users, send it back
       let users = [];
       for(let user of userArrays)
@@ -113,7 +135,7 @@ var fs = require('fs');
 
   // Post: provided windowData replaces corresponding windowData in db
   // Post in the future - socket sends out blast that this window has been updated
-  router.put('/putWindowData', function(req, res, next) {
+  router.put('/putWindowData', checkJwt, function(req, res, next) {
 
     courtModel.putWindowData(req.body.windowData).then((court) => {
       // emit that this window has been updated
@@ -192,9 +214,9 @@ var fs = require('fs');
   // Post: closure provided updates the version of it currently in db
   // Param: The closure to be updated
   // Sends updated court object
-  router.put('/putClosure', (req, res, next) => {
+  router.put('/putClosure', checkJwt, (req, res, next) => {
+    console.log(req.get('Authorization'));
     courtModel.putClosure(req.body.closure, req.body.court_id).then((data) => {
-      console.log(data[1])
       res.send(data[1]);
     }).catch((err) => {
       console.log('err /putClosure in controller.js\n' +err)
@@ -211,7 +233,8 @@ var fs = require('fs');
   // Post: new closure is added to closures of provided court
   // Param: the closure to be added and the court to wich it will be added
   // Sends back updated court
-  router.post('/postClosure', (req, res, next) => {
+  router.post('/postClosure', checkJwt, (req, res, next) => {
+    console.log(req.get('Authorization'));
     courtModel.postClosure(req.body.closure, req.body.court_id).then((court) => {
       res.send(court);
     }).catch((err) => {
@@ -240,13 +263,13 @@ var fs = require('fs');
   // Post: Closure  provided is removed from the db
   // Param: _id of the closure to be deleted
   // Sends back updated court
-  router.delete('/deleteClosure', (req, res, next) => {
-    courtModel.deleteClosure(req.query.closure_id, req.query.court_id).then((court) => {
-      console.log(court);
+  router.delete('/deleteClosure', checkJwt, (req, res, next) => {
+    courtModel.deleteClosure(req.get('closure_id'), req.get("court_id"))
+    .then((court) => {
       res.send(court);
     }).catch((err) => {
       console.log('err /deleteClosure in controller.js\n' +err)
-    });;
+    });
   })
 
 
