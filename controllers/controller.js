@@ -107,6 +107,19 @@ const jwksRsa = require('jwks-rsa');
     }).catch((err) => {  next(err)  });
   })
 
+  // Sends back a single user corresponding to the auth_id provided
+  // If there is no user with that id it sends back {}
+  router.get('/getUsersByAuth_id', checkJwt, (req, res, next) => {
+    console.log("eli");
+    userModel.getUsersByAuth_id(req.get('auth_id')).then((user) => {
+      console.log(user);
+      // If there are no users, send theempty object.  Else send the user
+      if (user.length === 0)
+        res.send({});
+      else res.send(user[0]);
+    })
+  })
+
 
   // Sends back an array of users that match the searchterm
   router.get('/getUsersByName', function(req, res, next) {
@@ -147,6 +160,7 @@ const jwksRsa = require('jwks-rsa');
 
   // Post: User in db is replaced with given user, updated user sent back in res objct
   router.put('/putUser', (req, res, next) => {
+    console.log(req.body.user);
     userModel.putUser(req.body.user).then((user) => {
       res.send(user);
     }).catch((err) => {  console.log(err);  next(err)  });

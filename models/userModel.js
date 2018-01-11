@@ -7,7 +7,7 @@ mongoose.Promise = require('bluebird');
 // Connect to our db as admin with hardcoded credentials.
 // We will adjust this when we complete our authentication cycle
 mongoose.connect(
-  'mongodb://eauslander94:jordanSpliff90@localhost:27017/Blacktop',
+  'mongodb://user:K5a8Jxk9sSjCEJHVDRTcTZnghjs8SDSs@localhost:27017/Blacktop',
   {useMongoClient: true},
   (error) => {
     if(error) console.log('err - mongoose.connect - userModel.js\n' + error);
@@ -28,6 +28,13 @@ exports.getUsers = function(user_ids){
   for(let id of user_ids)
     userPromises.push(User.find({'_id': id}));
   return Promise.all(userPromises);
+}
+
+// Returns:  Promise which resolves into an array of either a 1 or 0 users
+// Param: auth_id: String id provided by auth0 which corresponds to a user
+exports.getUsersByAuth_id = function(auth_id){
+  console.log(auth_id);
+  return(User.find({'auth_id': auth_id}));
 }
 
 
@@ -174,6 +181,7 @@ var userSchema = mongoose.Schema({
   fName: String,
   nName: String,
   lName: String,
+  auth_id: String,
   // An array of pointers to court objects
   homecourts: [String],
   // An array of pointers to user objects

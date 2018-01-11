@@ -7,7 +7,8 @@ mongoose.Promise = require('bluebird');
 // Connect to our db as admin with hardcoded credentials.
 // We will adjust this when we complete our authentication cycle
 mongoose.connect(
-  'mongodb://eauslander94:jordanSpliff90@localhost:27017/Blacktop',
+  'mongodb://user:K5a8Jxk9sSjCEJHVDRTcTZnghjs8SDSs@localhost:27017/Blacktop',
+  //'mongodb://eauslander94:jordanSpliff90@localhost:27017/Blacktop',
   {useMongoClient: true},
   (error) => {
     if(error) console.log('err - mongoose.connect - courtModel.js\n' + error);
