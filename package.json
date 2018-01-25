@@ -10,17 +10,20 @@
     "start": "node server.js"
   },
   "devDependencies": {
-    "mongoose": "^4.6.2",
     "body-parser": "^1.15.2",
+    "claudia": "^3.2.0",
     "cors": "^2.8.0",
     "del": "2.2.0",
     "express": "^4.14.0",
     "http": "0.0.0",
     "method-override": "^2.3.6",
+    "mongoose": "^4.6.2",
     "morgan": "^1.7.0",
     "superlogin": "^0.6.1"
   },
   "dependencies": {
+    "aws-sdk": "^2.186.0",
+    "aws-serverless-express": "^3.0.2",
     "body-parser": "^1.17.1",
     "express": "^4.15.2",
     "express-jwt": "^5.3.0",
