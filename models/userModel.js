@@ -188,8 +188,8 @@ var userSchema = mongoose.Schema({
   friends: [String],
   // Another array of pointers to user objects
   friendRequests: [String],
-  avatar: {data: Buffer, contentType: String},
-  backgroundImage: {data: Buffer, contentType: String},
+  avatar: String,
+  backgroundImage: String,
   // Pointer to the court the user is beside
   courtside: String
 });

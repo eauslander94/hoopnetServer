@@ -48,6 +48,9 @@ exports.courtsByLocation = function(location, range){
       }
   }).exec();
 }
+// REMEMBER: A geospacial query needs an index on the court model.
+// The following did the trick: db.courts.createIndex({location: '2dsphere'})
+
 
 
 // Post:  Provided window Data replaces corresponding windowData in db
@@ -201,8 +204,8 @@ exports.refresh = function(name, lat, long){
 exports.eventEmitter = new events.EventEmitter();
 
 
-let forsyth = new Court({
-  name: 'Tompkins Square Park',
+let jakeCribCourt = new Court({
+  name: 'Jake\'s Crib Court',
   type: 'outdoor',
   baskets: 4,
   openTimes: ['6:00a', '6:00a', '6:00a', '6:00a', '6:00a', '6:00a', '6:00a'],
@@ -210,7 +213,7 @@ let forsyth = new Court({
 
   location: {
     type: "Point",
-    coordinates: [-73.981784, 40.726429]
+    coordinates: [-73.942695, 40.850673]
   },
 
   windowData: {
@@ -229,7 +232,7 @@ let forsyth = new Court({
 });
 
 
-// forsyth.save(function(err, forsyth) {
+// jakeCribCourt.save(function(err, jakeCribCourt) {
 //   if(err) return console.error(err);
-//   console.log('saving forsyth')
+//   console.log('saving Jake\'s Crib Court')
 // });

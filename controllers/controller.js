@@ -51,6 +51,7 @@ const jwksRsa = require('jwks-rsa');
   // Query param - Array of string _ids of courts to be fetched
   router.get('/getCourtsById', (req, res, next) => {
 
+    console.log(req.query.court_ids[0]);
     courtModel.getCourtsById(JSON.parse(req.query.court_ids))
     .then((courts) => {
         let responseCourts = []
@@ -73,7 +74,7 @@ const jwksRsa = require('jwks-rsa');
 
   router.get('/courtside', checkJwt, (req, res, next) => {
 
-    courtModel.courtsByLocation(JSON.parse(req.get('location')), 100)
+    courtModel.courtsByLocation(JSON.parse(req.get('location')), 10000)
     .then((courts) => {
       switch(courts.length){
         case 1:
@@ -225,7 +226,6 @@ const jwksRsa = require('jwks-rsa');
     promises.push(courtModel.courtsidePut(req.body.court_id, req.body.user_id));
     promises.push(userModel.courtsidePut(req.body.court_id, req.body.user_id));
     Promise.all(promises).then((data) => {
-      console.log(data)
       res.send({court: data[0], user: data[1]});
     }).catch((err) => {
       console.log('err /courtsidePutUser in controller.js\n' +err)
@@ -243,6 +243,12 @@ const jwksRsa = require('jwks-rsa');
     }).catch((err) => {
       console.log('err /putClosure in controller.js\n' +err)
     });
+  })
+
+  // Logs the message to the console, moves on
+  router.put('/serverLog', (req, res, next) => {
+    console.log(req.body.message);
+    next();
   })
 
 
