@@ -7,7 +7,14 @@ mongoose.Promise = require('bluebird');
 // Connect to our db as admin with hardcoded credentials.
 // We will adjust this when we complete our authentication cycle
 mongoose.connect(
+  // Connection with hosted mLab db
+  //'mongodb://eauslander94:jordanSpliff90@ds119078.mlab.com:19078/blacktop',
+
+  // Connection with local db as regular user
   'mongodb://user:K5a8Jxk9sSjCEJHVDRTcTZnghjs8SDSs@localhost:27017/Blacktop',
+
+  // Connection with local db as super user
+  //'mongodb://eauslander94:jordanSpliff90@localhost:27017/Blacktop',
   {useMongoClient: true},
   (error) => {
     if(error) console.log('err - mongoose.connect - userModel.js\n' + error);

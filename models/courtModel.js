@@ -7,7 +7,13 @@ mongoose.Promise = require('bluebird');
 // Connect to our db as admin with hardcoded credentials.
 // We will adjust this when we complete our authentication cycle
 mongoose.connect(
+  // Connection with hosted mLab db
+  //'mongodb://eauslander94:jordanSpliff90@ds119078.mlab.com:19078/blacktop',
+
+  // Connection with local db as regular user
   'mongodb://user:K5a8Jxk9sSjCEJHVDRTcTZnghjs8SDSs@localhost:27017/Blacktop',
+
+  // Connection with local db as super user
   //'mongodb://eauslander94:jordanSpliff90@localhost:27017/Blacktop',
   {useMongoClient: true},
   (error) => {
@@ -204,8 +210,8 @@ exports.refresh = function(name, lat, long){
 exports.eventEmitter = new events.EventEmitter();
 
 
-let jakeCribCourt = new Court({
-  name: 'Jake\'s Crib Court',
+let forsyth = new Court({
+  name: 'Forsyth Park - Houston Street Courts',
   type: 'outdoor',
   baskets: 4,
   openTimes: ['6:00a', '6:00a', '6:00a', '6:00a', '6:00a', '6:00a', '6:00a'],
@@ -213,7 +219,7 @@ let jakeCribCourt = new Court({
 
   location: {
     type: "Point",
-    coordinates: [-73.942695, 40.850673]
+    coordinates: [-73.990822, 40.723199]
   },
 
   windowData: {
@@ -232,7 +238,7 @@ let jakeCribCourt = new Court({
 });
 
 
-// jakeCribCourt.save(function(err, jakeCribCourt) {
+// forsyth.save(function(err, forsyth) {
 //   if(err) return console.error(err);
-//   console.log('saving Jake\'s Crib Court')
+//   console.log('saving Tompkins')
 // });
