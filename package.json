@@ -1,11 +1,11 @@
 {
-  "name": "review-king",
+  "name": "eauslander94",
   "version": "0.1.0",
   "description": "A sample Node.js app using Express 4",
   "engines": {
     "node": "5.9.1"
   },
-  "main": "server.js",
+  "main": "lambda.js",
   "scripts": {
     "start": "node server.js"
   },

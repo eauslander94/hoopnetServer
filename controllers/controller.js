@@ -40,10 +40,31 @@ const jwksRsa = require('jwks-rsa');
 
   // Sends back an array of all courts in our db
   router.get('/getAllCourts', (req, res, next) => {
-
-    courtModel.getAllCourts().then((courts) => {
-      res.send(courts);
-    }).catch((err) => {  next(err)  });
+    res.send([
+      { "_id" : ObjectId("5a1dec50035cd21921b47f29"),
+      "name" : "Forsyth Park - Houston Street Courts",
+      "type" : "outdoor",
+      "baskets" : 4, "closures" : [],
+      "windowData" : {
+        "pNow" : [ ],
+        "aLastValidated" : ISODate("2018-01-11T22:12:16.044Z"),
+        "actionDescriptor" :
+        "long wait times",
+        "action" : "packed",
+        "gLastValidated" : ISODate("2018-01-11T22:12:19.185Z"),
+        "games" : [ "4", "4", "4", "4" ],
+        "baskets" : 4,
+        "court_id" : "5a1dec50035cd21921b47f29"
+      },
+      "location" : { "type" : "Point", "coordinates" : [ -73.990828, 40.723145 ] },
+      "closeTimes" : [ "11:00p", "11:00p", "11:00p", "11:00p", "11:00p", "11:00p", "11:00p" ],
+      "openTimes" : [ "6:00a", "6:00a", "6:00a", "6:00a", "6:00a", "6:00a", "6:00a" ],
+      "__v" : 0
+    }])
+    next();
+    // courtModel.getAllCourts().then((courts) => {
+    //   res.send(courts);
+    // }).catch((err) => {  next(err)  });
   })
 
 

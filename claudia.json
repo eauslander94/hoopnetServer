@@ -1,0 +1,10 @@
+{
+  "lambda": {
+    "role": "eauslander94-executor",
+    "name": "eauslander94",
+    "region": "us-east-1"
+  },
+  "api": {
+    "id": "xdyhadso88"
+  }
+}
