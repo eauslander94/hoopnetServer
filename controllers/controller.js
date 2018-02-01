@@ -8,13 +8,22 @@ var fs = require('fs');
 const jwt = require('express-jwt');
 const jwksRsa = require('jwks-rsa');
 
+// set up realtime.co connection
+var ortcNodeclient = require('ibtrealtimesjnode').IbtRealTimeSJNode;
+// Create Messaging client
+var ortcClient = new ortcNodeclient();
+// Set Messaging client properties
+ortcClient.setConnectionMetadata('clientConnMeta');
+ortcClient.setClusterUrl('http://ortc-developers.realtime.co/server/2.1/');
+// ortcClient.onDisconnected = function() {
+//   console.log('disconnected');
+// }
 
-  router.all('/', function(req, res, next) {
-    console.log(req.method + " request recieved");
-
-    res.type('text/plain');
-    next();
-  })
+router.all('/', function(req, res, next) {
+  console.log(req.method + " request recieved");
+  res.type('text/plain');
+  next();
+})
 
 
   // Authentication middleware. When used, the
@@ -40,30 +49,10 @@ const jwksRsa = require('jwks-rsa');
 
   // Sends back an array of all courts in our db
   router.get('/getAllCourts', (req, res, next) => {
-    // res.send([
-    //   { "_id" : ObjectId("5a1dec50035cd21921b47f29"),
-    //   "name" : "Forsyth Park - Houston Street Courts",
-    //   "type" : "outdoor",
-    //   "baskets" : 4, "closures" : [],
-    //   "windowData" : {
-    //     "pNow" : [ ],
-    //     "aLastValidated" : ISODate("2018-01-11T22:12:16.044Z"),
-    //     "actionDescriptor" :
-    //     "long wait times",
-    //     "action" : "packed",
-    //     "gLastValidated" : ISODate("2018-01-11T22:12:19.185Z"),
-    //     "games" : [ "4", "4", "4", "4" ],
-    //     "baskets" : 4,
-    //     "court_id" : "5a1dec50035cd21921b47f29"
-    //   },
-    //   "location" : { "type" : "Point", "coordinates" : [ -73.990828, 40.723145 ] },
-    //   "closeTimes" : [ "11:00p", "11:00p", "11:00p", "11:00p", "11:00p", "11:00p", "11:00p" ],
-    //   "openTimes" : [ "6:00a", "6:00a", "6:00a", "6:00a", "6:00a", "6:00a", "6:00a" ],
-    //   "__v" : 0
-    // }])
-    // next();
+
     courtModel.getAllCourts().then((courts) => {
       console.log('received courts from mLab database');
+      console.log(courts);
       res.send(courts);
     }).catch((err) => {  next(err)  });
   })
@@ -178,9 +167,21 @@ const jwksRsa = require('jwks-rsa');
   router.put('/putWindowData', checkJwt, function(req, res, next) {
 
     courtModel.putWindowData(req.body.windowData).then((court) => {
-      // emit that this window has been updated
-      app.io.emit("windowUpdate" + court.windowData.court_id, court.windowData);
-      res.send(court.windowData);
+
+      // connect to the messaging webhook
+      ortcClient.connect('pLJ1wW', 'testToken');
+      // on connection, send message to connected clients, disconnect
+      ortcClient.onConnected = function(ortc){
+        ortcClient.send('windowUpdate' + court.windowData.court_id,
+          JSON.stringify(court.windowData)
+        );
+        ortcClient.disconnect();
+      }
+      // on disconnect, send response
+      ortcClient.onDisconnected = function() {
+        console.log('disconnected');
+        res.send(court.windowData);
+      }
     }).catch((err) => {  next(err)  });
   })
 
