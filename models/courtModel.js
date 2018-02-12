@@ -74,24 +74,27 @@ exports.putWindowData = function(windowData){
 
 // Post: user_id is added to windowData's pNow corresponding to court_id
 // Params: the ids of the data to update
-exports.courtsidePut = function(court_id, user_id){
-  return Court.findOneAndUpdate(
-    {_id: court_id},
-    {$addToSet: {'windowData.pNow': user_id}},
-    {new: true}
-  ).exec();
+exports.checkIn = function(court_id, user_id){
+
+  return Court.findOne({_id: court_id}, (err, court) => {
+
+    if(err) return err;
+
+    // if user is already in players array remove her
+    if(court.windowData.players.indexOf(user_id) > -1)
+      court.windowData.players.splice(court.windowData.players.indexOf(user_id), 1)
+    // add user to beginning of array
+    court.windowData.players.unshift(user_id);
+    // if more than 50 players, remove te last one
+    if(court.windowData.players.length > 50)
+      court.windowData.players.splice(court.windowData.players.length - 1, 1)
+
+    // save the court, give controller the promise returned by Model.save
+    return court.save();
+  });
+
 }
 
-
-// Post: user_id is removed from court_id's windowData's pNow
-// Params: the ids of the court and user to update
-exports.courtsideDelete = function(court_id, user_id){
-  return Court.findOneAndUpdate(
-    {_id: court_id},
-    {$pull: {'windowData.pNow': user_id}},
-    {new: true}
-  ).exec();
-}
 
 // Post: Closure whose id is provided is removed from the db
 // Param: _id of the closure to be deleted
@@ -161,7 +164,7 @@ var courtSchema = mongoose.Schema({
     actionDescriptor: String,
     aLastValidated: Date,
     court_id: String,
-    pNow: [String],
+    players: [String],
   },
   closures: [{
     clStart: Date,
@@ -210,10 +213,10 @@ exports.refresh = function(name, lat, long){
 exports.eventEmitter = new events.EventEmitter();
 
 
-let jakeCribCourt = new Court({
+let newCourt = new Court({
   name: 'Jake\'s Crib Court',
-  type: 'outdoor',
-  baskets: 4,
+  type: 'indoor',
+  baskets: 2,
   openTimes: ['6:00a', '6:00a', '6:00a', '6:00a', '6:00a', '6:00a', '6:00a'],
   closeTimes: ['11:00p','11:00p','11:00p','11:00p','11:00p','11:00p','11:00p'],
 
@@ -223,22 +226,22 @@ let jakeCribCourt = new Court({
   },
 
   windowData: {
-    baskets: 4,
-    games: ["5", "4", "2"],
+    baskets: 2,
+    games: ["4"],
     gLastValidated: new Date(),
     action: "Active",
     actionDescriptor: "continuous runs",
     aLastValidated: new Date(),
     // Update this from cmdline, if we need to. Command in in google drive under mongoDB reference guide
     court_id: "",
-    pNow: []
+    players: []
   },
 
   closures: [],
 });
 
 
-// jakeCribCourt.save(function(err, jakeCribCourt) {
+// newCourt.save(function(err, newCourt) {
 //   if(err) return console.error(err);
-//   console.log('saving Jake\'s Crib Court')
+//   console.log('saving New Court')
 // });

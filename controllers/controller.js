@@ -52,7 +52,7 @@ router.all('/', function(req, res, next) {
 
     courtModel.getAllCourts().then((courts) => {
       console.log('received courts from mLab database');
-      console.log(courts);
+      // console.log(courts);
       res.send(courts);
     }).catch((err) => {  next(err)  });
   })
@@ -85,8 +85,11 @@ router.all('/', function(req, res, next) {
 
   router.get('/courtside', checkJwt, (req, res, next) => {
 
-    courtModel.courtsByLocation(JSON.parse(req.get('location')), 10000)
+    console.log(req.get('location'))
+    // the range, below, is in METERS as we store locations as GeoJSON Points
+    courtModel.courtsByLocation(JSON.parse(req.get('location')), 100)
     .then((courts) => {
+      console.log(courts.length + " courts");
       switch(courts.length){
         case 1:
           res.send({responseCode: 1, courts: courts});
@@ -111,6 +114,20 @@ router.all('/', function(req, res, next) {
   // Sends back an array of users
   // Param:  [String] - array of user ids of users to be fetched
   router.get('/getUsers', checkJwt, function(req, res, next) {
+
+    // Resolve the promise returned by the model
+    userModel.getUsers(JSON.parse(req.get('user_ids'))).then((userArrays) => {
+      // massage data into array of users, send it back
+      let users = [];
+      for(let user of userArrays)
+        users.push(user[0]);
+      res.send(users);
+    }).catch((err) => {  next(err)  });
+  })
+
+  // Sends back an array of users
+  // Param:  [String] - array of user ids of users to be fetched
+  router.get('/windowGetUsers', (req, res, next) => {
 
     // Resolve the promise returned by the model
     userModel.getUsers(JSON.parse(req.get('user_ids'))).then((userArrays) => {
@@ -188,7 +205,7 @@ router.all('/', function(req, res, next) {
 
   // Post: User in db is replaced with given user, updated user sent back in res objct
   router.put('/putUser', checkJwt, (req, res, next) => {
-
+    console.log('put User')
     userModel.putUser(req.body.user).then((user) => {
       res.send(user);
     }).catch((err) => {  console.log(err);  next(err)  });
@@ -243,15 +260,17 @@ router.all('/', function(req, res, next) {
   // Post:  User added to court's pNow, court added to user's courtside
   // Body params: ids of respective user and court
   // Sends: updated court and updated user
-  router.put('/courtsidePut', checkJwt, (req, res, next) => {
+  router.put('/checkIn', checkJwt, (req, res, next) => {
 
+    console.log('yo');
     let promises = [];
-    promises.push(courtModel.courtsidePut(req.body.court_id, req.body.user_id));
-    promises.push(userModel.courtsidePut(req.body.court_id, req.body.user_id));
+    promises.push(courtModel.checkIn(req.body.court_id, req.body.user_id));
+    promises.push(userModel.checkIn(req.body.court_id, req.body.user_id));
     Promise.all(promises).then((data) => {
+      console.log(data);
       res.send({court: data[0], user: data[1]});
     }).catch((err) => {
-      console.log('err /courtsidePutUser in controller.js\n' +err)
+      console.log('err /checkIn in controller.js\n' +err)
     });
   })
 
@@ -276,7 +295,7 @@ router.all('/', function(req, res, next) {
 
 
   router.post('/newUser', checkJwt, (req, res, next) => {
-
+    console.log('new User')
     userModel.newUser(req.body.user);
     next();
   })
@@ -294,19 +313,18 @@ router.all('/', function(req, res, next) {
   })
 
 
-  // Post:  User added to court's pNow, court added to user's courtside
+  // Post: Court removed from user's courtside, checkOutTime saved
   // Body params: ids of respective user and court
   // Sends: updated court and updated user
-  router.delete('/courtsideDelete', checkJwt, (req, res, next) => {
+  router.delete('/checkOut', checkJwt, (req, res, next) => {
+    console.log('checkOut');
 
-    let promises = [];
-    promises.push(courtModel.courtsideDelete(req.get('court_id'), req.get('user_id')));
-    promises.push(userModel.courtsideDelete(req.get('court_id'), req.get('user_id')));
-    Promise.all(promises).then((data) => {
-      console.log(data)
-      res.send({court: data[0], user: data[1]});
+    userModel.checkOut(req.get('court_id'), req.get('user_id')).then((user) => {
+      console.log(user)
+      res.send(user);
     }).catch((err) => {
-      console.log('err /courtsidePutUser in controller.js\n' +err)
+      console.log('err /checkOut in controller.js\n' +err)
+      next(err);
     });
   })
 

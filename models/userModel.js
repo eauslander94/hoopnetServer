@@ -159,22 +159,59 @@ exports.putHomecourt = function(user_id, court_id){
 }
 
 
-// Post:    given court id is added to user's courtside field
+// Post:    either update or creates new check in object for given court
 // Params:  ids of the user to be updated and court he/she is by
 // Retruns: Promise resolving to updated user
-exports.courtsidePut = function(court_id, user_id){
-  return User.findOneAndUpdate(
-    {_id: user_id},
-    { $set: {courtside: user_id} },
-    {upsert: true, new: true}
-  ).exec();
+exports.checkIn = function(court_id, user_id){
+
+  console.log(user_id);
+  return User.findOne({_id: user_id}, (err, user) => {
+    if(err) return err;
+
+    // set user's courtside field to be te court she is checking into
+    user.courtside = court_id;
+
+    var checkedIn = false;
+    for(i = 0; i < user.checkIns.length; i++){
+      // if we've checked into this court before
+      if(user.checkIns[i].court_id === court_id){
+        user.checkIns[i].in = new Date();  // reset the check in date
+        checkedIn = true;
+      }
+    }
+
+    // If we have not, create new checkIn object
+    if(!checkedIn){
+      user.checkIns.push({
+        'court_id': court_id,
+        'in': new Date()
+      })
+    }
+    return user.save();
+
+  })
 }
 
 
 // Post:    given court id is removed from user's courtside field
 // Params:  ids of the user to be updated and court he/she is no longer by
 // Retruns: Promise resolving to updated user
-exports.courtsideDelete = function(court_id, user_id){
+exports.checkOut = function(court_id, user_id){
+
+  return User.findOne({_id: user_id}, (err, user) => {
+    if(err) return err;
+
+    console.log(user.courtside);
+    // nullify courtside, set checkOut time of this court's checkIn object
+    user.courtside = null;
+    for(i = 0; i < user.checkIns.length; i++)
+      if(user.checkIns[i].court_id === court_id)
+        user.checkIns[i].out = new Date();
+
+    return user.save();
+  })
+
+
   return User.findOneAndUpdate(
     {_id: user_id},
     { $set: {courtside: null} },
@@ -198,7 +235,13 @@ var userSchema = mongoose.Schema({
   avatar: String,
   backgroundImage: String,
   // Pointer to the court the user is beside
-  courtside: String
+  courtside: String,
+  // array of the courts te user checked in to and the times they checked in
+  checkIns: [{
+    court_id: String,
+    in: Date,
+    out: Date
+  }]
 });
 
 // The model of the schema above
@@ -217,6 +260,7 @@ let eli = new User({
     avatar: {data: '', contentType: ''},
     backgroundImage: {data: '', contentType: ''},
     courtside: '',
+    checkIns: [{}]
   })
 
   // eli.save(function(err, eli) {
