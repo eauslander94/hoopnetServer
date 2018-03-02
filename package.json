@@ -30,6 +30,7 @@
     "express-jwt-authz": "^1.0.0",
     "ibtrealtimesjnode": "^2.1.30",
     "jwks-rsa": "^1.2.1",
+    "mongoose": "^4.13.11",
     "promise": "^8.0.1",
     "socket.io": "^2.0.4"
   }

@@ -19,7 +19,9 @@ mongoose.connect(
   (error) => {
     if(error) console.log('err - mongoose.connect - courtModel.js\n' + error);
   }
-);
+).then(() => {
+  console.log('connected using .connect courtModel');
+});
 
 
 var db = mongoose.connection;
@@ -153,6 +155,7 @@ var courtSchema = mongoose.Schema({
 
   location: {
     type: {type: String},
+    // [lng, lat]
     coordinates: [Number]
   },
 

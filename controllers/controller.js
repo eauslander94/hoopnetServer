@@ -50,6 +50,7 @@ router.all('/', function(req, res, next) {
   // Sends back an array of all courts in our db
   router.get('/getAllCourts', (req, res, next) => {
 
+    console.log('fetching courts');
     courtModel.getAllCourts().then((courts) => {
       console.log('received courts from mLab database');
       // console.log(courts);
@@ -62,7 +63,6 @@ router.all('/', function(req, res, next) {
   // Query param - Array of string _ids of courts to be fetched
   router.get('/getCourtsById', (req, res, next) => {
 
-    console.log(req.query.court_ids[0]);
     courtModel.getCourtsById(JSON.parse(req.query.court_ids))
     .then((courts) => {
         let responseCourts = []
@@ -85,11 +85,9 @@ router.all('/', function(req, res, next) {
 
   router.get('/courtside', checkJwt, (req, res, next) => {
 
-    console.log(req.get('location'))
     // the range, below, is in METERS as we store locations as GeoJSON Points
     courtModel.courtsByLocation(JSON.parse(req.get('location')), 100)
     .then((courts) => {
-      console.log(courts.length + " courts");
       switch(courts.length){
         case 1:
           res.send({responseCode: 1, courts: courts});
@@ -144,7 +142,7 @@ router.all('/', function(req, res, next) {
   router.get('/getUsersByAuth_id', checkJwt, (req, res, next) => {
 
     userModel.getUsersByAuth_id(req.get('auth_id')).then((user) => {
-      console.log(user);
+
       // If there are no users, send theempty object.  Else send the user
       if (user.length === 0)
         res.send({});
@@ -197,7 +195,9 @@ router.all('/', function(req, res, next) {
       // on disconnect, send response
       ortcClient.onDisconnected = function() {
         console.log('disconnected');
-        res.send(court.windowData);
+        // no need to send back windowData, user gets it from ortc
+        next();
+        // res.send(court.windowData);
       }
     }).catch((err) => {  next(err)  });
   })
@@ -205,7 +205,7 @@ router.all('/', function(req, res, next) {
 
   // Post: User in db is replaced with given user, updated user sent back in res objct
   router.put('/putUser', checkJwt, (req, res, next) => {
-    console.log('put User')
+
     userModel.putUser(req.body.user).then((user) => {
       res.send(user);
     }).catch((err) => {  console.log(err);  next(err)  });
@@ -257,17 +257,16 @@ router.all('/', function(req, res, next) {
   })
 
 
-  // Post:  User added to court's pNow, court added to user's courtside
+  // Post:  User added to court's players
   // Body params: ids of respective user and court
   // Sends: updated court and updated user
   router.put('/checkIn', checkJwt, (req, res, next) => {
 
-    console.log('yo');
     let promises = [];
     promises.push(courtModel.checkIn(req.body.court_id, req.body.user_id));
     promises.push(userModel.checkIn(req.body.court_id, req.body.user_id));
     Promise.all(promises).then((data) => {
-      console.log(data);
+
       res.send({court: data[0], user: data[1]});
     }).catch((err) => {
       console.log('err /checkIn in controller.js\n' +err)
@@ -312,21 +311,6 @@ router.all('/', function(req, res, next) {
     });
   })
 
-
-  // Post: Court removed from user's courtside, checkOutTime saved
-  // Body params: ids of respective user and court
-  // Sends: updated court and updated user
-  router.delete('/checkOut', checkJwt, (req, res, next) => {
-    console.log('checkOut');
-
-    userModel.checkOut(req.get('court_id'), req.get('user_id')).then((user) => {
-      console.log(user)
-      res.send(user);
-    }).catch((err) => {
-      console.log('err /checkOut in controller.js\n' +err)
-      next(err);
-    });
-  })
 
 
   // Post: Closure  provided is removed from the db

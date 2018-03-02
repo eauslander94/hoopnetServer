@@ -6,8 +6,9 @@ var app = require('express')();
 // Setup for our app
 var cors = require('cors');
 var bodyParser = require('body-parser');
- app.use(bodyParser.json());
+ app.use(bodyParser.json({limit: '50mb'}));
  app.use(bodyParser.urlencoded({
+  limit: '50mb',
   extended: true
 }));
 app.use(cors())

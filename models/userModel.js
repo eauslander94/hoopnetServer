@@ -6,7 +6,7 @@ mongoose.Promise = require('bluebird');
 
 // Connect to our db as admin with hardcoded credentials.
 // We will adjust this when we complete our authentication cycle
-mongoose.connect(
+mongoose.createConnection(
   // Connection with hosted mLab db
   'mongodb://eauslander94:jordanSpliff90@ds119078.mlab.com:19078/blacktop',
 
@@ -19,7 +19,9 @@ mongoose.connect(
   (error) => {
     if(error) console.log('err - mongoose.connect - userModel.js\n' + error);
   }
-);
+).then(() => {
+  console.log('connected');
+});
 
 // Our connection in an object
 var db = mongoose.connection;
@@ -82,7 +84,6 @@ exports.putUser = function(user){
         friendRequests: user.friendRequests,
         avatar: user.avatar,
         backgroundImage: user.backgroundImage,
-        courtside: user.courtSide,
       }
     },
     {new: true}
@@ -164,15 +165,12 @@ exports.putHomecourt = function(user_id, court_id){
 // Retruns: Promise resolving to updated user
 exports.checkIn = function(court_id, user_id){
 
-  console.log(user_id);
   return User.findOne({_id: user_id}, (err, user) => {
     if(err) return err;
 
-    // set user's courtside field to be te court she is checking into
-    user.courtside = court_id;
-
     var checkedIn = false;
     for(i = 0; i < user.checkIns.length; i++){
+
       // if we've checked into this court before
       if(user.checkIns[i].court_id === court_id){
         user.checkIns[i].in = new Date();  // reset the check in date
@@ -187,36 +185,10 @@ exports.checkIn = function(court_id, user_id){
         'in': new Date()
       })
     }
+
     return user.save();
 
   })
-}
-
-
-// Post:    given court id is removed from user's courtside field
-// Params:  ids of the user to be updated and court he/she is no longer by
-// Retruns: Promise resolving to updated user
-exports.checkOut = function(court_id, user_id){
-
-  return User.findOne({_id: user_id}, (err, user) => {
-    if(err) return err;
-
-    console.log(user.courtside);
-    // nullify courtside, set checkOut time of this court's checkIn object
-    user.courtside = null;
-    for(i = 0; i < user.checkIns.length; i++)
-      if(user.checkIns[i].court_id === court_id)
-        user.checkIns[i].out = new Date();
-
-    return user.save();
-  })
-
-
-  return User.findOneAndUpdate(
-    {_id: user_id},
-    { $set: {courtside: null} },
-    {upsert: true, new: true}
-  ).exec();
 }
 
 
@@ -232,15 +204,18 @@ var userSchema = mongoose.Schema({
   friends: [String],
   // Another array of pointers to user objects
   friendRequests: [String],
-  avatar: String,
-  backgroundImage: String,
-  // Pointer to the court the user is beside
-  courtside: String,
-  // array of the courts te user checked in to and the times they checked in
+  avatar: {
+    data: String,
+    contentType: String
+  },
+  backgroundImage: {
+    data: String,
+    contentType: String,
+  },
+  // array of the courts the user checked in to and the time they checked in
   checkIns: [{
     court_id: String,
     in: Date,
-    out: Date
   }]
 });
 
@@ -259,7 +234,6 @@ let eli = new User({
     friendRequests: [],
     avatar: {data: '', contentType: ''},
     backgroundImage: {data: '', contentType: ''},
-    courtside: '',
     checkIns: [{}]
   })
 
