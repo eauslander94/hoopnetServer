@@ -20,7 +20,7 @@ mongoose.createConnection(
     if(error) console.log('err - mongoose.connect - userModel.js\n' + error);
   }
 ).then(() => {
-  console.log('connected');
+  console.log('connected using create connection in userModel.js');
 });
 
 // Our connection in an object
