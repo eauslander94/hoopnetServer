@@ -182,6 +182,8 @@ router.all('/', function(req, res, next) {
   router.put('/putWindowData', checkJwt, function(req, res, next) {
 
     courtModel.putWindowData(req.body.windowData).then((court) => {
+      // send window data back, publish window data to this window's channel
+      res.send(court.windowData);
 
       // connect to the messaging webhook
       ortcClient.connect('pLJ1wW', 'testToken');
@@ -190,15 +192,12 @@ router.all('/', function(req, res, next) {
         ortcClient.send('windowUpdate' + court.windowData.court_id,
           JSON.stringify(court.windowData)
         );
+      // console.log('sending ortc publication');
         ortcClient.disconnect();
       }
-      // on disconnect, send response
-      ortcClient.onDisconnected = function() {
-        console.log('disconnected');
-        // no need to send back windowData, user gets it from ortc
-        next();
-        // res.send(court.windowData);
-      }
+      // ortcClient.onDisconnected = function() {
+      //   console.log('disconnected');
+      // }
     }).catch((err) => {  next(err)  });
   })
 
