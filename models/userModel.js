@@ -79,11 +79,12 @@ exports.putUser = function(user){
         nName: user.nName,
         fName: user.fName,
         lName: user.lName,
+        auth_id: user.auth_id,
         homecourts: user.homecourts,
         friends: user.friends,
         friendRequests: user.friendRequests,
         avatar: user.avatar,
-        backgroundImage: user.backgroundImage,
+        checkIns: user.checkIns,
       }
     },
     {new: true}
@@ -96,7 +97,7 @@ exports.putUser = function(user){
 // Params:  ids of users to be added
 // Returns: promise.all promise, resolving to an array like following:
 // [updateStatus, updateStatus, updatedUser1object, updatedUser2object]
-exports.addFriend = function(id1, id2){
+exports.confirmFriendRequest = function(id1, id2){
   let promises = [];
   promises.push(User.update({_id: id1}, { $pull: {friendRequests: id2}}).exec());
   promises.push(User.update({_id: id2}, { $pull: {friendRequests: id1}}).exec());
@@ -120,7 +121,7 @@ exports.addFriend = function(id1, id2){
 // Param:   ids of current user and requested user
 // Retruns: promise resolving to the updated requested user
 exports.requestFriend = function(requestedUser, currentUser){
-  return User.update({_id: requestedUser}, {$push:{friendRequests: currentUser}}).exec();
+  return User.update({_id: requestedUser}, {$addToSet:{friendRequests: currentUser}}).exec();
 }
 
 
@@ -128,6 +129,7 @@ exports.requestFriend = function(requestedUser, currentUser){
 // Params:  ids of the users who will no longer be friends.  So sad.
 // Returns: Promise resolving to array of the updated users
 exports.removeFriend = function(user1, user2){
+  console.log('removing friends')
   var promises = [];
   promises.push(User.findOneAndUpdate(
     {_id: user1},
@@ -156,7 +158,13 @@ exports.newUser = function(user){
 // Params:  ids of court and user
 // Returns: Promise
 exports.putHomecourt = function(user_id, court_id){
-  return(User.update({_id: user_id}, {$addToSet:{homecourts: court_id}}).exec());
+  // return(User.update({_id: user_id}, {$addToSet:{homecourts: court_id}}).exec());
+
+  return User.findOneAndUpdate(
+    {_id: user_id},
+    {$addToSet:{homecourts: court_id}},
+    {upsert: true, new: true}
+  ).exec()
 }
 
 
@@ -169,11 +177,12 @@ exports.checkIn = function(court_id, user_id){
     if(err) return err;
 
     var checkedIn = false;
+    // go thru user's checkIns
     for(i = 0; i < user.checkIns.length; i++){
 
-      // if we've checked into this court before
+      // if we've checked into this court before, reset checkIn Date
       if(user.checkIns[i].court_id === court_id){
-        user.checkIns[i].in = new Date();  // reset the check in date
+        user.checkIns[i].in = new Date();
         checkedIn = true;
       }
     }

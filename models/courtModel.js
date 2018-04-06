@@ -43,6 +43,13 @@ exports.getCourtsById = function(court_ids){
   return Promise.all(promises);
 }
 
+
+// Returns: Promise resolving to array of courts which contain searchterm in the name
+// Param:   Term to search by
+exports.getCourtsByName = function(searchterm){
+  return Court.find({"name" : { "$regex": searchterm, "$options": "i" }}).exec()
+}
+
 // Returns: promise resolving to array of courts within the courtside distance
 // Param: location the following format - [lng, lat]
 // Param: The range(in meters) from courts to location
@@ -65,6 +72,8 @@ exports.courtsByLocation = function(location, range){
 // Param: WindowData to be used as the update
 // Returns: Promise resolving this court with the updated windowData
 exports.putWindowData = function(windowData){
+
+  console.log("players in courtModel: " + windowData.players);
 
   return Court.findOneAndUpdate(
     {_id: windowData.court_id},
@@ -93,7 +102,8 @@ exports.checkIn = function(court_id, user_id){
 
     // save the court, give controller the promise returned by Model.save
     return court.save();
-  });
+  }
+);
 
 }
 
@@ -102,6 +112,7 @@ exports.checkIn = function(court_id, user_id){
 // Param: _id of the closure to be deleted
 // Returns: Promise resolving to updated court
 exports.postClosure = function(closure, court_id){
+
   return Court.findOneAndUpdate(
     {_id: court_id},
     {$addToSet: {closures: closure}},
@@ -114,7 +125,7 @@ exports.postClosure = function(closure, court_id){
 // Returns: Promise resolving to updated
 exports.putClosure = function(closure, court_id){
   console.log('court_id: ' + court_id);
-  console.log('closure_id: ' + closure._id);
+  console.log(closure.baskets);
 
   let promises = []
   // Remove the old closure
@@ -150,8 +161,9 @@ var courtSchema = mongoose.Schema({
   name: String,
   type: String,
   baskets: Number,
-  openTimes: [String],
-  closeTimes: [String],
+  // Sunday at position 0, saturday position 6
+  openTimes: [Date],
+  closeTimes: [Date],
 
   location: {
     type: {type: String},
@@ -173,6 +185,7 @@ var courtSchema = mongoose.Schema({
     clEnd: Date,
     reason: String,
     baskets: Number,
+    // array of numbers(sunday = 0), where a value of 1 or 2 means closure is in effect that day
     days: [Number],
     repeat: Boolean,
   }]
@@ -214,26 +227,32 @@ exports.refresh = function(name, lat, long){
 
 exports.eventEmitter = new events.EventEmitter();
 
+let open = new Date();
+open.setHours(7);
+open.setMinutes(0);
+let closed = new Date();
+closed.setHours(22);
+closed.setMinutes(0);
 
 let newCourt = new Court({
-  name: 'Jake\'s Crib Court',
-  type: 'indoor',
-  baskets: 2,
-  openTimes: ['6:00a', '6:00a', '6:00a', '6:00a', '6:00a', '6:00a', '6:00a'],
-  closeTimes: ['11:00p','11:00p','11:00p','11:00p','11:00p','11:00p','11:00p'],
+  name: "",
+  type: 'outdoor',
+  baskets: 5,
+  openTimes: [open, open, open, open, open, open, open],
+  closeTimes: [closed, closed, closed, closed, closed, closed, closed],
 
   location: {
     type: "Point",
-    coordinates: [-73.942695, 40.850673]
+    coordinates: [-73.931992, 40.804264]
   },
 
   windowData: {
-    baskets: 2,
-    games: ["4"],
+    baskets: 5,
+    games: ["5", "4", "4"],
     gLastValidated: new Date(),
-    action: "Active",
-    actionDescriptor: "continuous runs",
-    aLastValidated: new Date(),
+    // Spaces on wait time
+    waitTime: "2 - 3",
+    wLastValidated: new Date(),
     // Update this from cmdline, if we need to. Command in in google drive under mongoDB reference guide
     court_id: "",
     players: []
@@ -245,5 +264,7 @@ let newCourt = new Court({
 
 // newCourt.save(function(err, newCourt) {
 //   if(err) return console.error(err);
-//   console.log('saving New Court')
+//   console.log('saving ' + newCourt.name)
 // });
+
+// db.courts.update({"_id" : ObjectId("5ace43b4d718e138f343a4dd")}, {$set: {"windowData.court_id": "5ace43b4d718e138f343a4dd"}})

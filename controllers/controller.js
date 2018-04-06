@@ -163,6 +163,17 @@ router.all('/', function(req, res, next) {
     }).catch((err) => {  next(err)  });
   });
 
+  // Post: Queries db for courts which contain searchterm in their name
+  // Returns: Array of courts
+  // Param: 'searchterm' - string by which we query db
+  router.get('/getCourtsByName', checkJwt, (req, res, next) => {
+    console.log(req.get('searchterm'))
+    courtModel.getCourtsByName(req.get('searchterm')).then((courts) => {
+      console.log(courts);
+      res.send(courts);
+    }).catch((err) => {  next(err)  });;
+  })
+
 
   // middlewear for refresh request
   // query params: name, lat and long of the court to be refreshed
@@ -181,28 +192,35 @@ router.all('/', function(req, res, next) {
   // Post in the future - socket sends out blast that this window has been updated
   router.put('/putWindowData', checkJwt, function(req, res, next) {
 
-    courtModel.putWindowData(req.body.windowData).then((court) => {
-      // send window data back, publish window data to this window's channel
-      res.send(court.windowData);
+    console.log("players array " + JSON.stringify(req.body.windowData.players));
 
-      // connect to the messaging webhook
+    let promises = [
+      courtModel.putWindowData(req.body.windowData),
+      userModel.checkIn(req.body.windowData.court_id, req.body.user_id)
+    ];
+
+    Promise.all(promises).then((data) => {
+
+      res.send({
+        court: data[0],
+        user: data[1]
+      })
+
+      // connect to the messaging webhook, send out updated window data
       ortcClient.connect('pLJ1wW', 'testToken');
-      // on connection, send message to connected clients, disconnect
       ortcClient.onConnected = function(ortc){
-        ortcClient.send('windowUpdate' + court.windowData.court_id,
-          JSON.stringify(court.windowData)
+        ortcClient.send('windowUpdate' + data[0].windowData.court_id,
+          JSON.stringify(data[0].windowData)
         );
-      // console.log('sending ortc publication');
         ortcClient.disconnect();
       }
-      // ortcClient.onDisconnected = function() {
-      //   console.log('disconnected');
-      // }
+
     }).catch((err) => {  next(err)  });
   })
 
 
-  // Post: User in db is replaced with given user, updated user sent back in res objct
+  // Post: User in db is replaced with given user
+  // Returns: updated user object
   router.put('/putUser', checkJwt, (req, res, next) => {
 
     userModel.putUser(req.body.user).then((user) => {
@@ -212,10 +230,11 @@ router.all('/', function(req, res, next) {
 
 
   // Post: Sends back array of updated users, starting withuser 1
-  router.put('/addFriend', checkJwt, (req, res, next) => {
+  router.put('/confirmFriendRequest', checkJwt, (req, res, next) => {
 
-    userModel.addFriend(req.body.user1, req.body.user2).then((users, err) => {
+    userModel.confirmFriendRequest(req.body.user1, req.body.user2).then((users, err) => {
       if (err) throw err;
+      console.log(users[2].fName);
       res.send([users[2], users[3]]);
     }).catch((err) => { console.log(err);  next(err)  });
   })
@@ -244,11 +263,11 @@ router.all('/', function(req, res, next) {
   // Post: Provided court_id is added to homecourt list of provided user_id
   // In English, user gets a new homecourt
   // Param: court_id and user_id
-  // Sends back: empty object
+  // Sends back: Updated user object
   router.put('/putHomecourt', checkJwt, (req, res, next) => {
 
-    userModel.putHomecourt(req.body.user_id, req.body.court_id).then(() => {
-      res.send();
+    userModel.putHomecourt(req.body.user_id, req.body.court_id).then((user) => {
+      res.send(user);
     }).catch((err) => {
       console.log('error in controller.js /putHomecourt ' + err);
       next(err);
@@ -279,6 +298,7 @@ router.all('/', function(req, res, next) {
   router.put('/putClosure', checkJwt, (req, res, next) => {
 
     courtModel.putClosure(req.body.closure, req.body.court_id).then((data) => {
+      console.log(data[1].closures)
       res.send(data[1]);
     }).catch((err) => {
       console.log('err /putClosure in controller.js\n' +err)
@@ -304,6 +324,7 @@ router.all('/', function(req, res, next) {
   router.post('/postClosure', checkJwt, (req, res, next) => {
 
     courtModel.postClosure(req.body.closure, req.body.court_id).then((court) => {
+      console.log(court.closures);
       res.send(court);
     }).catch((err) => {
       console.log('err /postClosure in controller.js\n' +err)
