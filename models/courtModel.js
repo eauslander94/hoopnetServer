@@ -43,6 +43,13 @@ exports.getCourtsById = function(court_ids){
   return Promise.all(promises);
 }
 
+
+// Returns: Promise resolving to array of courts which contain searchterm in the name
+// Param:   Term to search by
+exports.getCourtsByName = function(searchterm){
+  return Court.find({"name" : { "$regex": searchterm, "$options": "i" }}).exec()
+}
+
 // Returns: promise resolving to array of courts within the courtside distance
 // Param: location the following format - [lng, lat]
 // Param: The range(in meters) from courts to location
@@ -102,6 +109,7 @@ exports.checkIn = function(court_id, user_id){
 // Param: _id of the closure to be deleted
 // Returns: Promise resolving to updated court
 exports.postClosure = function(closure, court_id){
+
   return Court.findOneAndUpdate(
     {_id: court_id},
     {$addToSet: {closures: closure}},
@@ -114,7 +122,7 @@ exports.postClosure = function(closure, court_id){
 // Returns: Promise resolving to updated
 exports.putClosure = function(closure, court_id){
   console.log('court_id: ' + court_id);
-  console.log('closure_id: ' + closure._id);
+  console.log(closure.baskets);
 
   let promises = []
   // Remove the old closure
@@ -150,8 +158,9 @@ var courtSchema = mongoose.Schema({
   name: String,
   type: String,
   baskets: Number,
-  openTimes: [String],
-  closeTimes: [String],
+  // Sunday at position 0, saturday position 6
+  openTimes: [Date],
+  closeTimes: [Date],
 
   location: {
     type: {type: String},
@@ -173,6 +182,7 @@ var courtSchema = mongoose.Schema({
     clEnd: Date,
     reason: String,
     baskets: Number,
+    // array of numbers(sunday = 0), where a value of 1 or 2 means closure is in effect that day
     days: [Number],
     repeat: Boolean,
   }]
