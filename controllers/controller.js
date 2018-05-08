@@ -190,7 +190,7 @@ router.all('/', function(req, res, next) {
 
   // Post: provided windowData replaces corresponding windowData in db
   // Post in the future - socket sends out blast that this window has been updated
-  router.put('/putWindowData', checkJwt, function(req, res, next) {
+  router.put('/scout', checkJwt, function(req, res, next) {
 
     console.log("players array " + JSON.stringify(req.body.windowData.players));
 
