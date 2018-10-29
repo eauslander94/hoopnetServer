@@ -190,8 +190,8 @@ exports.checkIn = function(court_id, user_id){
     // If we have not, create new checkIn object
     if(!checkedIn){
       user.checkIns.push({
-        'court_id': court_id,
-        'in': new Date()
+        court_id: court_id,
+        in: new Date()
       })
     }
 
@@ -216,10 +216,6 @@ var userSchema = mongoose.Schema({
   avatar: {
     data: String,
     contentType: String
-  },
-  backgroundImage: {
-    data: String,
-    contentType: String,
   },
   // array of the courts the user checked in to and the time they checked in
   checkIns: [{

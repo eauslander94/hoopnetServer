@@ -83,31 +83,6 @@ exports.putWindowData = function(windowData){
 }
 
 
-// Post: user_id is added to windowData's pNow corresponding to court_id
-// Params: the ids of the data to update
-exports.checkIn = function(court_id, user_id){
-
-  return Court.findOne({_id: court_id}, (err, court) => {
-
-    if(err) return err;
-
-    // if user is already in players array remove her
-    if(court.windowData.players.indexOf(user_id) > -1)
-      court.windowData.players.splice(court.windowData.players.indexOf(user_id), 1)
-    // add user to beginning of array
-    court.windowData.players.unshift(user_id);
-    // if more than 50 players, remove te last one
-    if(court.windowData.players.length > 50)
-      court.windowData.players.splice(court.windowData.players.length - 1, 1)
-
-    // save the court, give controller the promise returned by Model.save
-    return court.save();
-  }
-);
-
-}
-
-
 // Post: Closure whose id is provided is removed from the db
 // Param: _id of the closure to be deleted
 // Returns: Promise resolving to updated court
@@ -124,8 +99,6 @@ exports.postClosure = function(closure, court_id){
 // Param: The closure to be updated
 // Returns: Promise resolving to updated
 exports.putClosure = function(closure, court_id){
-  console.log('court_id: ' + court_id);
-  console.log(closure.baskets);
 
   let promises = []
   // Remove the old closure
